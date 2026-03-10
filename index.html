@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokedex</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap');
+
+    :root {
+      --red: #e3350d;
+      --dark-red: #b02a0a;
+      --yellow: #ffcb05;
+      --blue: #3d7dca;
+      --dark: #1a1a2e;
+      --card-bg: #ffffff;
+      --body-bg: #f0f4f8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--body-bg);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--red);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pokeball-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #fff 50%, #e3350d 50%);
+      border: 3px solid #222;
+      position: relative;
+      animation: spin-slow 4s linear infinite;
+    }
+    .pokeball-icon::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border: 3px solid #222;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .pokeball-icon::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: #222;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    header h1 {
+      font-family: 'Press Start 2P', monospace;
+      color: var(--yellow);
+      font-size: 1.4rem;
+      text-shadow: 2px 2px 0 #b02a0a, -1px -1px 0 #b02a0a;
+      letter-spacing: 2px;
+    }
+
+    /* ── Search / Filter bar ── */
+    .controls {
+      max-width: 1200px;
+      margin: 28px auto 0;
+      padding: 0 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .search-wrap {
+      flex: 1 1 260px;
+      position: relative;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      border: 2px solid #ddd;
+      border-radius: 50px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      outline: none;
+      transition: border-color .2s;
+      background: #fff;
+    }
+    .search-wrap input:focus { border-color: var(--red); }
+    .search-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #aaa;
+    }
+
+    .type-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .type-btn {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: .8rem;
+      color: #fff;
+      text-transform: capitalize;
+      transition: transform .15s, box-shadow .15s, opacity .15s;
+      opacity: .65;
+    }
+    .type-btn:hover, .type-btn.active { opacity: 1; transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+
+    /* ── Grid ── */
+    .grid {
+      max-width: 1200px;
+      margin: 24px auto 40px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px 16px 16px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.15);
+    }
+    .card .card-bg {
+      position: absolute;
+      inset: 0;
+      opacity: .08;
+      border-radius: 16px;
+    }
+    .card .number {
+      font-size: .75rem;
+      font-weight: 700;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+    .card img {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,.2));
+      transition: transform .3s;
+    }
+    .card:hover img { transform: scale(1.12) translateY(-4px); }
+    .card .name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #333;
+      text-transform: capitalize;
+      margin: 10px 0 8px;
+    }
+    .types {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: .7rem;
+      font-weight: 700;
+      color: #fff;
+      text-transform: capitalize;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 440px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      animation: pop-in .25s cubic-bezier(.175,.885,.32,1.275);
+    }
+    @keyframes pop-in {
+      from { transform: scale(.7); opacity: 0; }
+      to   { transform: scale(1);  opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 28px 28px 20px;
+      position: relative;
+      text-align: center;
+    }
+    .modal-header .close-btn {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: rgba(0,0,0,.1);
+      border: none;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #555;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .modal-header .close-btn:hover { background: rgba(0,0,0,.2); }
+
+    .modal-header img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    .modal-header .modal-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      text-transform: capitalize;
+      color: #222;
+      margin: 8px 0 4px;
+    }
+    .modal-header .modal-number {
+      color: #aaa;
+      font-weight: 700;
+      font-size: .9rem;
+    }
+
+    .modal-body {
+      padding: 0 28px 28px;
+    }
+
+    .modal-body .types { margin-bottom: 20px; }
+
+    .section-title {
+      font-size: .8rem;
+      font-weight: 800;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 16px 0 10px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .info-item {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .info-item .label {
+      font-size: .7rem;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .info-item .value {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #333;
+      margin-top: 2px;
+      text-transform: capitalize;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .stat-name {
+      font-size: .75rem;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      width: 72px;
+      flex-shrink: 0;
+    }
+    .stat-val {
+      font-size: .85rem;
+      font-weight: 800;
+      color: #333;
+      width: 30px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .stat-bar-bg {
+      flex: 1;
+      height: 8px;
+      background: #eee;
+      border-radius: 50px;
+      overflow: hidden;
+    }
+    .stat-bar {
+      height: 100%;
+      border-radius: 50px;
+      transition: width 1s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Loader ── */
+    .loader {
+      text-align: center;
+      padding: 60px;
+      color: #aaa;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .loader .pokeball-spin {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #e3350d 50%, #fff 50%);
+      border: 4px solid #222;
+      position: relative;
+      animation: spin 1s linear infinite;
+    }
+    .loader .pokeball-spin::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      background: #222;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .loader .pokeball-spin::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border: 4px solid #222;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .load-more-wrap {
+      text-align: center;
+      margin: 0 0 48px;
+    }
+    .load-more-btn {
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 40px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+      box-shadow: 0 4px 12px rgba(227,53,13,.4);
+    }
+    .load-more-btn:hover { background: var(--dark-red); transform: scale(1.04); }
+    .load-more-btn:disabled { opacity: .5; cursor: default; transform: none; }
+
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaa;
+      font-weight: 700;
+      font-size: 1.1rem;
+      grid-column: 1/-1;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="pokeball-icon"></div>
+    <h1>Pokedex</h1>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Search Pokemon..." autocomplete="off" />
+  </div>
+  <div class="type-filter" id="typeFilter"></div>
+</div>
+
+<div class="grid" id="grid">
+  <div class="loader" style="grid-column:1/-1">
+    <div class="pokeball-spin"></div>
+    Loading Pokemon...
+  </div>
+</div>
+
+<div class="load-more-wrap" id="loadMoreWrap" style="display:none">
+  <button class="load-more-btn" id="loadMoreBtn">Load More</button>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header" id="modalHeader">
+      <button class="close-btn" id="closeBtn">&#x2715;</button>
+      <img id="modalImg" src="" alt="" />
+      <div class="modal-name" id="modalName"></div>
+      <div class="modal-number" id="modalNumber"></div>
+    </div>
+    <div class="modal-body">
+      <div class="types" id="modalTypes"></div>
+      <div class="section-title">About</div>
+      <div class="info-grid" id="modalInfo"></div>
+      <div class="section-title">Base Stats</div>
+      <div id="modalStats"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const TYPE_COLORS = {
+    normal:'#A8A878', fire:'#F08030', water:'#6890F0', electric:'#F8D030',
+    grass:'#78C850', ice:'#98D8D8', fighting:'#C03028', poison:'#A040A0',
+    ground:'#E0C068', flying:'#A890F0', psychic:'#F85888', bug:'#A8B820',
+    rock:'#B8A038', ghost:'#705898', dragon:'#7038F8', dark:'#705848',
+    steel:'#B8B8D0', fairy:'#EE99AC'
+  };
+
+  const STAT_COLORS = {
+    hp:'#FF5959', attack:'#F5AC78', defense:'#FAE078',
+    'special-attack':'#9DB7F5', 'special-defense':'#A7DB8D', speed:'#FA92B2'
+  };
+
+  const STAT_LABELS = {
+    hp:'HP', attack:'ATK', defense:'DEF',
+    'special-attack':'SpATK', 'special-defense':'SpDEF', speed:'SPD'
+  };
+
+  let allPokemon = [];
+  let displayed = [];
+  let filtered = [];
+  let activeType = 'all';
+  let searchQuery = '';
+  let offset = 0;
+  const BATCH = 40;
+
+  async function fetchPokemonList(limit, off) {
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${off}`);
+    const data = await res.json();
+    return data.results;
+  }
+
+  async function fetchPokemon(url) {
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function loadBatch() {
+    document.getElementById('loadMoreBtn').disabled = true;
+    const list = await fetchPokemonList(BATCH, offset);
+    const batch = await Promise.all(list.map(p => fetchPokemon(p.url)));
+    allPokemon.push(...batch);
+    offset += BATCH;
+    applyFilters();
+    document.getElementById('loadMoreBtn').disabled = false;
+    document.getElementById('loadMoreWrap').style.display = 'block';
+  }
+
+  function applyFilters() {
+    filtered = allPokemon.filter(p => {
+      const matchesSearch = p.name.includes(searchQuery) ||
+        String(p.id).padStart(3,'0').includes(searchQuery);
+      const matchesType = activeType === 'all' ||
+        p.types.some(t => t.type.name === activeType);
+      return matchesSearch && matchesType;
+    });
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="no-results">No Pokemon found.</div>';
+      return;
+    }
+
+    filtered.forEach(p => {
+      const primaryType = p.types[0].type.name;
+      const color = TYPE_COLORS[primaryType] || '#aaa';
+      const sprite = p.sprites.other['official-artwork'].front_default ||
+                     p.sprites.front_default;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-bg" style="background:${color}"></div>
+        <div class="number">#${String(p.id).padStart(3,'0')}</div>
+        <img src="${sprite}" alt="${p.name}" loading="lazy" />
+        <div class="name">${p.name}</div>
+        <div class="types">
+          ${p.types.map(t => `<span class="badge" style="background:${TYPE_COLORS[t.type.name]||'#aaa'}">${t.type.name}</span>`).join('')}
+        </div>
+      `;
+      card.addEventListener('click', () => openModal(p));
+      grid.appendChild(card);
+    });
+  }
+
+  function openModal(p) {
+    const primaryType = p.types[0].type.name;
+    const color = TYPE_COLORS[primaryType] || '#aaa';
+    const sprite = p.sprites.other['official-artwork'].front_default ||
+                   p.sprites.front_default;
+
+    document.getElementById('modalHeader').style.background =
+      `linear-gradient(135deg, ${color}33 0%, ${color}66 100%)`;
+    document.getElementById('modalImg').src = sprite;
+    document.getElementById('modalImg').alt = p.name;
+    document.getElementById('modalName').textContent = p.name;
+    document.getElementById('modalNumber').textContent = `#${String(p.id).padStart(3,'0')}`;
+
+    document.getElementById('modalTypes').innerHTML =
+      p.types.map(t => `<span class="badge" style="background:${TYPE_COLORS[t.type.name]||'#aaa'};font-size:.85rem;padding:5px 14px">${t.type.name}</span>`).join('');
+
+    const heightM = (p.height / 10).toFixed(1);
+    const weightKg = (p.weight / 10).toFixed(1);
+    const abilities = p.abilities.map(a => a.ability.name.replace('-',' ')).join(', ');
+    document.getElementById('modalInfo').innerHTML = `
+      <div class="info-item"><div class="label">Height</div><div class="value">${heightM} m</div></div>
+      <div class="info-item"><div class="label">Weight</div><div class="value">${weightKg} kg</div></div>
+      <div class="info-item" style="grid-column:1/-1"><div class="label">Abilities</div><div class="value">${abilities}</div></div>
+    `;
+
+    document.getElementById('modalStats').innerHTML = p.stats.map(s => {
+      const name = s.stat.name;
+      const val = s.base_stat;
+      const pct = Math.min(100, (val / 255) * 100);
+      const barColor = STAT_COLORS[name] || '#aaa';
+      return `
+        <div class="stat-row">
+          <span class="stat-name">${STAT_LABELS[name] || name}</span>
+          <span class="stat-val">${val}</span>
+          <div class="stat-bar-bg">
+            <div class="stat-bar" style="width:0%;background:${barColor}" data-pct="${pct}"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('modalOverlay').classList.add('open');
+
+    // animate bars after paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.stat-bar').forEach(bar => {
+          bar.style.width = bar.dataset.pct + '%';
+        });
+      });
+    });
+  }
+
+  // Build type filter buttons
+  function buildTypeFilter() {
+    const wrap = document.getElementById('typeFilter');
+    const types = ['all', ...Object.keys(TYPE_COLORS)];
+    types.forEach(type => {
+      const btn = document.createElement('button');
+      btn.className = 'type-btn' + (type === 'all' ? ' active' : '');
+      btn.textContent = type;
+      btn.style.background = type === 'all' ? '#555' : (TYPE_COLORS[type] || '#aaa');
+      btn.addEventListener('click', () => {
+        activeType = type;
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  // Events
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value.toLowerCase().trim();
+    applyFilters();
+  });
+
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    document.getElementById('modalOverlay').classList.remove('open');
+  });
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay'))
+      document.getElementById('modalOverlay').classList.remove('open');
+  });
+
+  document.getElementById('loadMoreBtn').addEventListener('click', loadBatch);
+
+  // Init
+  buildTypeFilter();
+  loadBatch();
+</script>
+</body>
+</html>
